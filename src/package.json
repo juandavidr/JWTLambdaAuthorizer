@@ -1,0 +1,13 @@
+{
+    "name": "jwtAuthorizr",
+    "version": "1.0.0",
+    "description": "Custom Authorizer Lambda function for API Gateway with Bearer JWT",
+    "main": "index.js",
+    "author": "Juan David Rodriguez jd.rodriguez@globant.com",
+    "license": "MIT",
+    "dependencies": {
+        "bluebird": "^3.7.2",
+        "jsonwebtoken": "^8.5.1",
+        "uuid": "^8.3.2"
+    }
+}

@@ -1,0 +1,40 @@
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    Timeout: 180
+    Handler: index.handler
+    Environment:
+      Variables:
+        TOKEN_SECRET: secret-info
+
+Resources:
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: v1
+      Auth:
+        DefaultAuthorizer: MyLambdaTokenAuthorizer
+        Authorizers:
+          MyLambdaTokenAuthorizer:
+            FunctionArn: !GetAtt MyAuthFunction.Arn
+
+  MyLoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src
+      Handler: index.handler
+      Runtime: nodejs12.x
+      Events:
+        GetRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /
+            Method: get
+
+  MyAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src
+      Handler: authorizer.handler
+      Runtime: nodejs12.x
