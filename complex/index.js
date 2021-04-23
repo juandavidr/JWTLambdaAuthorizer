@@ -13,13 +13,11 @@ exports.handler = async function(event, context, callback) {
 
     // remove the 'Bearer ' prefix from the auth token
     var token = event.authorizationToken.replace('Bearer ', '');
-    // TODO use network-id as principal_id
-    const principal_id = 'abc123'; // fake
 
     //temporal test
     token = await create_access_token();
     // end temporal test
-    const policy = create_policy(event['methodArn'], principal_id);
+    const policy = create_policy(event['methodArn'], 'principal_id');
 
     if (event['authorizationToken']) {
         const user_info = auth_token_decode(token);
@@ -273,7 +271,7 @@ class AuthPolicy {
             throw ('No statements defined for the policy');
         }
         let policy = {
-            'principalId': this.principalId,
+            'principalId': this.networkId,
             'policyDocument': {
                 'Version': this.version,
                 'Statement': []

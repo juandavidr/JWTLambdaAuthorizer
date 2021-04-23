@@ -1,18 +1,19 @@
 {
-    "principalId": "user",
+    "principalId": "yyyyyyyy", // The principal user identification associated with the token sent by the client.
     "policyDocument": {
         "Version": "2012-10-17",
         "Statement": [{
             "Action": "execute-api:Invoke",
-            "Effect": "Allow",
-            "Resource": "arn:aws:execute-api:us-east-1:226314355862:4r0azd/v1/GET/"
+            "Effect": "Allow|Deny",
+            "Resource": "arn:aws:execute-api:{regionId}:{accountId}:{apiId}/{stage}/{httpVerb}/[{resource}/[{child-resources}]]"
         }]
     },
     "context": {
-        "stringKey": "stringval",
-        "numberKey": 123,
-        "booleanKey": true
-    }
+        "stringKey": "value",
+        "numberKey": "1",
+        "booleanKey": "true"
+    },
+    "usageIdentifierKey": "{api-key}"
 } {
     "principalId": "abc123",
     "policyDocument": {
@@ -20,11 +21,11 @@
         "Statement": [{
             "Action": "execute-api:Invoke",
             "Effect": "Allow",
-            "Resource": "arn:aws:execute-api:us-east-1:226314355862:4r0azd/v1/GET/"
+            "Resource": "arn:aws:execute-api:us-east-1:226314355862:0ycipwocdc/v1/GET/payment/braintree/client-token"
         }]
     },
     "context": {
-        "networkId": "value"
+        "networkId": "test-network"
     },
-    "usageIdentifierKey": "123456789"
+    "usageIdentifierKey": "xZkeL7RMx06yeITqSw6dS9EuamnGtQOJ4Vi2W3Dq"
 }
