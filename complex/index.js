@@ -1,8 +1,8 @@
 'use strict';
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
-const region = "us-east-1";
-const secretName = "integration/jwt";
+const region = process.env.AWS_REGION;
+const secretName = process.env.SECRET_NAME;
 
 let userIdentifierKey = '';
 let networkId = '';
@@ -14,14 +14,10 @@ exports.handler = async function(event, context, callback) {
     // remove the 'Bearer ' prefix from the auth token
     var token = event.authorizationToken.replace('Bearer ', '');
 
-    //temporal test
-    token = await create_access_token();
-    // end temporal test
     const policy = create_policy(event['methodArn'], 'principal_id');
 
     if (event['authorizationToken']) {
-        const user_info = auth_token_decode(token);
-        console.log(user_info);
+        const user_info = await auth_token_decode(token);
         if (user_info) {
             policy.allowAllMethods();
         } else {
@@ -32,21 +28,6 @@ exports.handler = async function(event, context, callback) {
     }
     return callback(null, policy.build());
 
-};
-
-/**
- * TODO: delete method
- * @returns 
- */
-const create_access_token = async function() {
-    //Returns new JWT Token.
-    let secret = await _getPrivateKeyValue();
-
-    let jwt_info = jwt.sign({
-        "sub": "ev-connect",
-        "exp": Date.now() + 300
-    }, secret['partner.api.jwt.token.secret']);
-    return jwt_info;
 };
 
 class AuthPolicy {
@@ -141,8 +122,8 @@ class AuthPolicy {
         if (resource[1] == '/') {
             resource = resource[1];
         }
-        // let resourceArn = `arn:aws:execute-api:${this.region}:${this.awsAccountId}:${this.restApiId}/${this.stage}/${verb}/${resource}`;
-        let resourceArn = this.methodArn;
+        let resourceArn = `arn:aws:execute-api:${this.region}:${this.awsAccountId}:${this.restApiId}/${this.stage}/${verb}/*`;
+        //let resourceArn = this.methodArn;
         if (effect.toLowerCase() == 'allow') {
             this.allowMethods.push({
                 'resourceArn': resourceArn,
@@ -271,7 +252,7 @@ class AuthPolicy {
             throw ('No statements defined for the policy');
         }
         let policy = {
-            'principalId': this.networkId,
+            'principalId': networkId,
             'policyDocument': {
                 'Version': this.version,
                 'Statement': []
@@ -288,6 +269,7 @@ class AuthPolicy {
         if (this.denyMethods.length > 0) {
             policy['policyDocument']['Statement'].push(this._getStatementForEffect('Deny', this.denyMethods)[0]);
         }
+        console.log('AUTH POLICY:  ' + JSON.stringify(policy))
         return policy;
     }
 }
@@ -303,8 +285,7 @@ const auth_token_decode = async function(auth_token) {
             secret['partner.api.jwt.token.secret'],
             "HS256");
         networkId = decoded.sub;
-        //TODO: get identifier key
-        userIdentifierKey = 'xZkeL7RMx06yeITqSw6dS9EuamnGtQOJ4Vi2W3Dq';
+        userIdentifierKey = decoded.apiKey;
 
         return true;
     } catch (e) {
@@ -314,12 +295,14 @@ const auth_token_decode = async function(auth_token) {
 };
 
 const create_policy = function(method_arn, principal_id) {
-    let tmp = method_arn.split(':');
-    let region = tmp[3];
-    let account_id = tmp[4];
-    let tmp2 = tmp[5].split('/');
-    let api_id = tmp2[0];
-    let stage = tmp2[1];
+    // Method ARN is splitted to build a custom policy arn
+    let method_arn_split = method_arn.split(':');
+    let region = method_arn_split[3];
+    let account_id = method_arn_split[4];
+    // method url is extracted and the splitted
+    let method_url_split = method_arn_split[5].split('/');
+    let api_id = method_url_split[0];
+    let stage = method_url_split[1];
 
     let policy = new AuthPolicy(principal_id, account_id);
     policy.restApiId = api_id;
